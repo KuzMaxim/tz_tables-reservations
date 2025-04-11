@@ -1,5 +1,5 @@
 from infrastructure.connect import create_connection, create_tables
-from sqlalchemy import select, insert, update
+from sqlalchemy import select, insert, update, delete
 from models.table import Table
 
 
@@ -8,8 +8,9 @@ class TableRepository:
         self.sessionmaker=create_connection()
         create_tables()
     
-    async def create_table(self, name, seats, location):
-        stmt = insert(Table).values(name=name,
+    async def create_table(self,id, name, seats, location):
+        stmt = insert(Table).values(id=id,
+                                    name=name,
                                    seats=seats,
                                    location=location)
         
@@ -17,24 +18,37 @@ class TableRepository:
             try:
                 await session.execute(stmt)
                 await session.commit()
-            except Exception as ex:
-                raise Exception(f"Can't add user to repository: {ex}")
+            except Exception as e:
+                raise Exception(f"Can't add user to repository: {e}")
 
-    async def get_tables(self, email: str) -> str:
-        stmt = select(Table.id).where(Table.email == email)
+    async def get_tables(self):
+        stmt = select(Table)
         
         async with self.sessionmaker() as session:
             try:
                 result = await session.execute(stmt)
-                row = result.fetchone()
+                row = result.scalars().all()
             except Exception as e:
-                raise Exception(f"Не удалось получить пользователя: {str(e)}")
+                raise Exception(f"Couldn't get tables: {e}")
             
         
         if row is None:
-            raise Exception(f"No user with email: {email}")
+            raise Exception(f"No tables found")
         else:
-            return str(row[0])
+                    return [{
+            "id": table.id,
+            "name": table.name,
+            "seats": table.seats,
+            "location": table.location
+        } for table in row]
 
-    async def delete_table():
-        ...
+    async def delete_table(self, id):
+        stmt=delete().where(Table.id==id)
+        
+        async with self.sessionmaker() as session:
+            try:
+                await session.execute(stmt)
+                await session.commit()
+            except Exception as e:
+                raise Exception(f"Couldn't delete table: {e}")
+            

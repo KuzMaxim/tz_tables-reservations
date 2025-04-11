@@ -13,20 +13,23 @@ table_service=TableService()
 @router.get("/")
 async def get_tables():
     try:
-        return await table_service.get_tables()
+         result=await table_service.get_tables()
     except Exception as e:
         return f"Oooops:{e}"
+    return result
     
 @router.post("/")
-async def create_table(name, seats, location):
+async def create_table(id, name, seats, location):
     try:
-        await table_service.create_table(name=name, seats=seats, location=location)
+        await table_service.create_table(id=id,name=name, seats=seats, location=location)
     except Exception as e:
         return f"Oooops:{e}"
-    
+    return "success"
+
 @router.delete("/{table_id}")
-async def delete_table():
+async def delete_table(table_id:int):
     try:
-        await table_service.delete_table()
+        await table_service.delete_table(id=table_id)
     except Exception as e:
         return f"Oooops:{e}"
+    return "success"
