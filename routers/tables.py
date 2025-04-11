@@ -13,7 +13,7 @@ table_service=TableService()
 @router.get("/")
 async def get_tables():
     try:
-         result=await table_service.get_tables()
+         return await table_service.get_tables()
     except Exception as e:
         return f"Oooops:{e}"
     return result

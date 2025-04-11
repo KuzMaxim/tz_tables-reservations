@@ -13,7 +13,7 @@ router = APIRouter(
 @router.get("/")
 async def get_reservations():
     try:
-        await reservation_service.get_reservations()
+        return await reservation_service.get_reservations()
     except Exception as e:
         return f"Ooops: {e}"
 @router.post("/")

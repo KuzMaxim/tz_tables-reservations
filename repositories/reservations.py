@@ -2,7 +2,8 @@ from infrastructure.connect import create_connection, create_tables
 from sqlalchemy import select, insert, update, delete, and_
 from models.reservation import Reservation
 from datetime import datetime, timedelta
-from sqlalchemy.sql.expression import func  # Add this import
+from sqlalchemy.sql.expression import func
+#2025-04-15T19:00:00
 
 
 class ReservationRepository:
@@ -10,14 +11,13 @@ class ReservationRepository:
         self.sessionmaker = create_connection()
         create_tables()
 
-    async def is_table_available(self, table_id: int, reservation_time: datetime, duration: int) -> bool:
-        end_time = datetime(reservation_time) + timedelta(minutes=duration)
+    async def is_table_available(self, table_id: int, reservation_time: datetime, duration: int, finish_time) -> bool:
         
         stmt = select(Reservation).where(
             and_(
                 Reservation.table_id == table_id,
-                Reservation.reservation_time < end_time,
-                func.make_interval(mins=Reservation.duration) + Reservation.reservation_time > reservation_time
+                Reservation.finish_time >= finish_time,
+                Reservation.reservation_time <= reservation_time
             )
         )
         
@@ -31,11 +31,13 @@ class ReservationRepository:
         return len(existing_reservations) == 0
     
     async def create_reservation(self, time_reservation: datetime, duration: int, table_id: int):
-        if not await self.is_table_available(table_id=table_id, reservation_time=time_reservation, duration=duration):
+        finish_time = time_reservation + timedelta(minutes=duration)
+        if not await self.is_table_available(table_id=table_id, reservation_time=time_reservation, duration=duration, finish_time=finish_time):
             raise Exception("Time is not available")
             
         stmt = insert(Reservation).values(
             table_id=table_id,
+            finish_time=finish_time,
             reservation_time=time_reservation,
             duration=duration
         )
@@ -45,7 +47,6 @@ class ReservationRepository:
                 await session.execute(stmt)
                 await session.commit()
             except Exception as e:
-                await session.rollback()
                 raise Exception(f"Couldn't create reservation: {e}")
             
     async def get_reservations(self):
@@ -65,6 +66,7 @@ class ReservationRepository:
             "id": reservation.id,
             "table_id": reservation.table_id,
             "reservation_time": reservation.reservation_time,
+            "finish_time":reservation.finish_time,
             "duration": reservation.duration
         } for reservation in reservations]
 

@@ -10,6 +10,7 @@ class Reservation(Base):
     id = Column(Integer, primary_key=True)
     table_id = Column(Integer, ForeignKey("tables.id"))
     reservation_time = Column(DateTime)
+    finish_time=Column(DateTime)
     duration = Column(Integer)
     
     table = relationship("Table", back_populates="reservations")
