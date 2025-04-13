@@ -17,7 +17,7 @@ POST /reservations/ - Создать новое бронирование
 
 DELETE /reservations/{id} - Отменить бронирование
 
-Запуск
+Сборка и запуск
 
 docker-compose build
 docker-compose up
